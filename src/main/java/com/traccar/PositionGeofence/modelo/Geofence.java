@@ -1,9 +1,17 @@
 package com.traccar.PositionGeofence.modelo;
 
+import java.text.ParseException;
+import java.util.Map;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "mcs_geofences")
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.traccar.PositionGeofence.geofence.GeofenceGeometry;
+import com.traccar.PositionGeofence.geofence.GeofenceGeometryFactory;
+
+@Document(collection = "mcs_geofence")
 public class Geofence {
 
     @Id
@@ -25,16 +33,21 @@ public class Geofence {
      */
     private String area;
 
+    private Map<String, Object> attributes;
+
+    // Variable interna que almacena la geometría ya parseada
+    @JsonIgnore
+    private GeofenceGeometry geometry;
     // Constructor vacío requerido por Spring
     public Geofence() {
     }
 
     // Constructor con parámetros (opcional)
-    public Geofence(long calendarId, String name, String description, String area) {
+    public Geofence(long calendarId, String name, String description, String area) throws ParseException {
         this.calendarId = calendarId;
         this.name = name;
         this.description = description;
-        this.area = area;
+        setArea(area);
     }
 
     // Getters y Setters
@@ -75,9 +88,30 @@ public class Geofence {
         return area;
     }
 
-    public void setArea(String area) {
-        // Aquí podrías parsear el texto para identificar 
-        // si es CIRCLE, POLYGON, LINESTRING, etc.
+    // Aquí se integra la lógica para generar la geometría a partir del string WKT
+    public void setArea(String area) throws ParseException {
+        this.geometry = GeofenceGeometryFactory.parse(area);
         this.area = area;
+    }
+
+    public Map<String, Object> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(Map<String, Object> attributes) {
+        this.attributes = attributes;
+    }
+
+     // Permite obtener la geometría ya parseada (no se expone en la respuesta JSON)
+    @JsonIgnore
+    public GeofenceGeometry getGeometry() {
+        return geometry;
+    }
+
+    // Permite establecer la geometría directamente y actualiza el campo "area" con su representación WKT
+    @JsonIgnore
+    public void setGeometry(GeofenceGeometry geometry) {
+        this.area = geometry.toWkt();
+        this.geometry = geometry;
     }
 }
