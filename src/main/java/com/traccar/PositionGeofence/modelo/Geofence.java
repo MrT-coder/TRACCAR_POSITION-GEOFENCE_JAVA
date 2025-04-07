@@ -12,7 +12,7 @@ import com.traccar.PositionGeofence.geofence.GeofenceGeometry;
 import com.traccar.PositionGeofence.geofence.GeofenceGeometryFactory;
 
 @Document(collection = "mcs_geofence")
-public class Geofence {
+public class Geofence extends ExtendedModel implements Schedulable {
 
     @Id
     private String id;

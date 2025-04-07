@@ -1,4 +1,5 @@
-package com.traccar.PositionGeofence.servicio;import java.util.List;
+package com.traccar.PositionGeofence.servicio;
+import java.util.List;
 import com.traccar.PositionGeofence.modelo.Geofence;
 
 public interface GeofenceService {

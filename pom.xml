@@ -48,6 +48,29 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+   	 		<groupId>org.springframework.boot</groupId>
+    		<artifactId>spring-boot-starter-amqp</artifactId>
+		</dependency>
+		<dependency>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-security</artifactId>
+      	</dependency>
+		<dependency>
+    		<groupId>org.springframework.boot</groupId>
+   	 		<artifactId>spring-boot-configuration-processor</artifactId>
+    		<optional>true</optional>
+		</dependency>
+		<dependency>
+    		<groupId>io.netty</groupId>
+    		<artifactId>netty-all</artifactId>
+    		<version>4.1.94.Final</version> 
+		</dependency>
+		<dependency>
+    		<groupId>commons-codec</groupId>
+    		<artifactId>commons-codec</artifactId>
+    		<version>1.15</version> 
+		</dependency>
 	</dependencies>
 
 	<build>

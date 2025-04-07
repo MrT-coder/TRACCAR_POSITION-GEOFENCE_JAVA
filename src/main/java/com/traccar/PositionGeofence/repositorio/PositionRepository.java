@@ -20,5 +20,6 @@ public interface PositionRepository extends MongoRepository<Position, String> {
     // Elimina posiciones en un rango de tiempo
     void deleteByDeviceIdAndFixTimeBetween(Long deviceId, Date from, Date to);
 
+    @SuppressWarnings("null")
     List<Position> findAll();
 }
