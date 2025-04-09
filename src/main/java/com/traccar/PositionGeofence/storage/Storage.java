@@ -1,19 +1,37 @@
 package com.traccar.PositionGeofence.storage;
 
-
 import java.util.List;
 
-public abstract class Storage {
+import com.traccar.PositionGeofence.modelo.BaseModel;
+import com.traccar.PositionGeofence.modelo.Permission;
 
-    public abstract <T> List<T> getObjects(Class<T> clazz, Request request) throws StorageException;
+public interface Storage {
 
-    public abstract <T> long addObject(T entity, Request request) throws StorageException;
+    /**
+     * Recupera una lista de objetos del tipo T según los criterios de consulta.
+     * Si request es null, se retornan todos los documentos de la colección.
+     */
+    <T> List<T> getObjects(Class<T> clazz, QueryRequest request) throws StorageException;
 
-    public abstract <T> void updateObject(T entity, Request request) throws StorageException;
+    /**
+     * Inserta un objeto en la base de datos.
+     * Devuelve el identificador generado.
+     */
+    <T> String addObject(T entity) throws StorageException;
 
-    public abstract void removeObject(Class<?> clazz, Request request) throws StorageException;
+    /**
+     * Actualiza o guarda el objeto.
+     */
+    <T> void updateObject(T entity) throws StorageException;
 
-    public abstract List<Permission> getPermissions(
+    /**
+     * Remueve los objetos del tipo clazz que cumplan la condición expresada en request.
+     */
+    void removeObject(Class<?> clazz, QueryRequest request) throws StorageException;
+
+    <T> T getObject(Class<T> clazz, QueryRequest request) throws StorageException;
+
+     public abstract List<Permission> getPermissions(
             Class<? extends BaseModel> ownerClass, long ownerId,
             Class<? extends BaseModel> propertyClass, long propertyId) throws StorageException;
 
@@ -21,15 +39,14 @@ public abstract class Storage {
 
     public abstract void removePermission(Permission permission) throws StorageException;
 
-    public List<Permission> getPermissions(
+    public default List<Permission> getPermissions(
             Class<? extends BaseModel> ownerClass,
             Class<? extends BaseModel> propertyClass) throws StorageException {
         return getPermissions(ownerClass, 0, propertyClass, 0);
     }
-
-    public <T> T getObject(Class<T> clazz, Request request) throws StorageException {
-        var objects = getObjects(clazz, request);
-        return objects.isEmpty() ? null : objects.get(0);
-    }
-
+    // Opcional: Métodos para permisos, según si decides implementarlos.
+    // Por ejemplo:
+    // List<Permission> getPermissions(...);
+    // void addPermission(Permission permission) throws StorageException;
+    // void removePermission(Permission permission) throws StorageException;
 }

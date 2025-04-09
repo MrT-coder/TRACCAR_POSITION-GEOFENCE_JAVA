@@ -15,7 +15,7 @@ import com.traccar.PositionGeofence.geofence.GeofenceGeometryFactory;
 public class Geofence extends ExtendedModel implements Schedulable {
 
     @Id
-    private String id;
+    private long id;
 
     // Identificador de calendario (si tu sistema maneja calendarios para activar/desactivar la geocerca)
     private long calendarId;
@@ -52,11 +52,11 @@ public class Geofence extends ExtendedModel implements Schedulable {
 
     // Getters y Setters
 
-    public String getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(long id) {
         this.id = id;
     }
 

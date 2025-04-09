@@ -18,6 +18,7 @@ import com.traccar.PositionGeofence.modelo.Device;
 import com.traccar.PositionGeofence.session.cache.CacheManager;
 
 
+
 @Component
 public abstract class BaseProtocolEncoder extends ChannelOutboundHandlerAdapter {
 

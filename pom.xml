@@ -71,6 +71,11 @@
     		<artifactId>commons-codec</artifactId>
     		<version>1.15</version> 
 		</dependency>
+		<dependency>
+    		<groupId>org.mnode.ical4j</groupId>
+    		<artifactId>ical4j</artifactId>
+    		<version>4.0.0-alpha8</version> <!-- Verifica la última versión estable -->
+		</dependency>
 	</dependencies>
 
 	<build>

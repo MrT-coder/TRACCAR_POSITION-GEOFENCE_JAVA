@@ -8,121 +8,142 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import com.traccar.PositionGeofence.modelo.BaseModel;
-import com.traccar.PositionGeofence.modelo.Notification;
-import com.traccar.PositionGeofence.modelo.User;
 
 public class CacheGraph {
 
+    // Mapa de raíces, donde se almacenan los nodos principales.
     private final Map<CacheKey, CacheNode> roots = new HashMap<>();
+    // Mapa con valores débiles para los nodos, para evitar mantener objetos innecesariamente en memoria.
     private final WeakValueMap<CacheKey, CacheNode> nodes = new WeakValueMap<>();
 
-    void addObject(BaseModel value) {
+    /**
+     * Agrega un objeto a la cache.
+     */
+    public void addObject(BaseModel value) {
         CacheKey key = new CacheKey(value);
         CacheNode node = new CacheNode(value);
         roots.put(key, node);
         nodes.put(key, node);
     }
 
-    void removeObject(Class<? extends BaseModel> clazz, String id) {
+    /**
+     * Elimina un objeto de la cache.
+     */
+    public void removeObject(Class<? extends BaseModel> clazz, long id) {
         CacheKey key = new CacheKey(clazz, id);
         CacheNode node = nodes.remove(key);
         if (node != null) {
+            // Se eliminan los enlaces hacia este nodo.
             node.getAllLinks(false).forEach(child -> child.getLinks(key.clazz(), true).remove(node));
         }
         roots.remove(key);
     }
 
+    /**
+     * Recupera un objeto almacenado en la cache.
+     */
     @SuppressWarnings("unchecked")
-    <T extends BaseModel> T getObject(Class<T> clazz, String id) {
+    public <T extends BaseModel> T getObject(Class<T> clazz, long id) {
         CacheNode node = nodes.get(new CacheKey(clazz, id));
         return node != null ? (T) node.getValue() : null;
     }
 
-    <T extends BaseModel> Stream<T> getObjects(
-            Class<? extends BaseModel> fromClass, String notificationId,
-            Class<Notification> clazz, Set<Class<? extends BaseModel>> proxies, boolean forward) {
+    /**
+     * Devuelve un stream de objetos del tipo indicado, considerando enlaces desde un nodo raíz identificado
+     * por (fromClass, fromId). El parámetro proxies indica clases que se deben usar como proxy para expandir la búsqueda.
+     * El parámetro forward indica la dirección del enlace.
+     */
+    public <T extends BaseModel> Stream<T> getObjects(
+            Class<? extends BaseModel> fromClass, long fromId,
+            Class<T> clazz, Set<Class<? extends BaseModel>> proxies, boolean forward) {
 
-        CacheNode rootNode = nodes.get(new CacheKey(fromClass, notificationId));
+        CacheNode rootNode = nodes.get(new CacheKey(fromClass, fromId));
         if (rootNode != null) {
-            return (Stream<T>) getObjectStream(rootNode, clazz, proxies, forward);
-        } else {
-            return Stream.empty();
+            return getObjectStream(rootNode, clazz, proxies, forward);
         }
+        return Stream.empty();
     }
 
     @SuppressWarnings("unchecked")
     private <T extends BaseModel> Stream<T> getObjectStream(
             CacheNode rootNode, Class<T> clazz, Set<Class<? extends BaseModel>> proxies, boolean forward) {
 
+        // Si la clase está en proxies, devolvemos un stream vacío.
         if (proxies.contains(clazz)) {
             return Stream.empty();
         }
 
-        var directSteam = rootNode.getLinks(clazz, forward).stream()
+        // Stream de nodos directos de la clase solicitada.
+        Stream<T> directStream = rootNode.getLinks(clazz, forward).stream()
                 .map(node -> (T) node.getValue());
 
-        var proxyStream = proxies.stream()
+        // Stream de nodos indirectos vía clases proxy.
+        Stream<T> proxyStream = proxies.stream()
                 .flatMap(proxyClass -> rootNode.getLinks(proxyClass, forward).stream()
                         .flatMap(node -> getObjectStream(node, clazz, proxies, forward)));
 
-        return Stream.concat(directSteam, proxyStream);
+        return Stream.concat(directStream, proxyStream);
     }
 
-    void updateObject(BaseModel value) {
+    /**
+     * Actualiza un objeto en la cache.
+     */
+    public void updateObject(BaseModel value) {
         CacheNode node = nodes.get(new CacheKey(value));
         if (node != null) {
             node.setValue(value);
         }
     }
 
-    boolean addLink(
-            Class<? extends BaseModel> fromClazz, String fromId,
-            BaseModel toValue) {
-        boolean stop = true;
-        CacheNode fromNode = nodes.get(new CacheKey(fromClazz, fromId));
+    /**
+     * Añade un enlace (link) bidireccional entre un objeto identificado por (fromClass, fromId)
+     * y el objeto destino (toValue). Si el nodo destino no existe, se crea y se agrega a la cache.
+     * Devuelve true si el nodo destino ya existía.
+     */
+    public boolean addLink(Class<? extends BaseModel> fromClass, long fromId, BaseModel toValue) {
+        boolean existed = true;
+        CacheNode fromNode = nodes.get(new CacheKey(fromClass, fromId));
         if (fromNode != null) {
             CacheKey toKey = new CacheKey(toValue);
             CacheNode toNode = nodes.get(toKey);
             if (toNode == null) {
-                stop = false;
+                existed = false;
                 toNode = new CacheNode(toValue);
                 nodes.put(toKey, toNode);
             }
             fromNode.getLinks(toValue.getClass(), true).add(toNode);
-            toNode.getLinks(fromClazz, false).add(fromNode);
+            toNode.getLinks(fromClass, false).add(fromNode);
         }
-        return stop;
+        return existed;
     }
 
-    void removeLink(
-            Class<? extends BaseModel> fromClazz, String fromId,
-            Class<? extends BaseModel> toClazz, String toId) {
-        CacheNode fromNode = nodes.get(new CacheKey(fromClazz, fromId));
+    /**
+     * Elimina un enlace (link) entre el objeto de (fromClass, fromId) y el objeto de (toClass, toId).
+     */
+    public void removeLink(Class<? extends BaseModel> fromClass, long fromId, 
+                           Class<? extends BaseModel> toClass, long toId) {
+        CacheNode fromNode = nodes.get(new CacheKey(fromClass, fromId));
         if (fromNode != null) {
-            CacheNode toNode = nodes.get(new CacheKey(toClazz, toId));
+            CacheNode toNode = nodes.get(new CacheKey(toClass, toId));
             if (toNode != null) {
-                fromNode.getLinks(toClazz, true).remove(toNode);
-                toNode.getLinks(fromClazz, false).remove(fromNode);
+                fromNode.getLinks(toClass, true).remove(toNode);
+                toNode.getLinks(fromClass, false).remove(fromNode);
             }
         }
     }
 
     @Override
     public String toString() {
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         for (CacheNode node : roots.values()) {
-            printNode(stringBuilder, node, "");
+            printNode(sb, node, "");
         }
-        return stringBuilder.toString().trim();
+        return sb.toString().trim();
     }
 
-    private void printNode(StringBuilder stringBuilder, CacheNode node, String indentation) {
-        stringBuilder
-                .append('\n')
-                .append(indentation)
-                .append(node.getValue().getClass().getSimpleName())
+    private void printNode(StringBuilder sb, CacheNode node, String indent) {
+        sb.append('\n').append(indent).append(node.getValue().getClass().getSimpleName())
                 .append('(').append(node.getValue().getId()).append(')');
-        node.getAllLinks(true).forEach(child -> printNode(stringBuilder, child, indentation + "  "));
+        node.getAllLinks(true).forEach(child -> printNode(sb, child, indent + "  "));
     }
-
 }

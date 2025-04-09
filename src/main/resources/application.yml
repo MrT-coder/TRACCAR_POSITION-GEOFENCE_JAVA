@@ -1,0 +1,85 @@
+spring:
+  application:
+    name: PositionGeofence
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/mcs_position_geofence
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: guest
+    password: guest
+
+server:
+  port: 8080
+
+# Configuración global (perfil "default", es decir, producción)
+traccar:
+  use-environment-variables: false
+  web:
+    path: "./web"
+    debug: false
+    console: false
+  geocoder:
+    type: "locationiq"
+  media:
+    path: "./media"
+  logger:
+    console: false
+    queries: false
+    full-stack-traces: false
+  mail:
+    debug: false
+  database:
+    driver: "com.mongodb.MongoDriver"
+    url: "mongodb://localhost:27017/mcs_position_geofence"
+    user: "yourUser"
+    password: "yourPassword"
+  atrack:
+    custom: false
+  intellitrac:
+    port: 0
+
+---
+# Configuración para el perfil "debug"
+spring:
+  profiles: debug
+
+traccar:
+  use-environment-variables: true
+  web:
+    # Uso del tema simple que aparece en el debug.xml original
+    path: "./traccar-web/simple"
+    debug: true
+    console: true
+  geocoder:
+    type: "pluscodes"
+  media:
+    path: "./target/media"
+  logger:
+    console: true
+    queries: false
+    full-stack-traces: true
+  mail:
+    debug: true
+  database:
+    # En modo debug se usa la configuración para H2 según el debug.xml
+    driver: "org.h2.Driver"
+    url: "jdbc:h2:./target/database"
+    user: "sa"
+    password: ""
+  atrack:
+    custom: true
+  intellitrac:
+    port: 6037
+
+
+gateway:
+  device:
+    baseUrl: http://api-gateway-or-device-service:9000   # Cambia a la URL real de tu servicio
+  user:
+    baseUrl: http://api-gateway-or-user-service:9001
+  notification:
+    baseUrl: http://api-gateway-or-notification-service:9002
+  server:
+    baseUrl: http://api-gateway-or-server-service:9003
