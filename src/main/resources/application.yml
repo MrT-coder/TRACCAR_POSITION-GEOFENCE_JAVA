@@ -12,6 +12,7 @@ spring:
 
 server:
   port: 8080
+  forward: ""
 
 # Configuración global (perfil "default", es decir, producción)
 traccar:
@@ -28,58 +29,72 @@ traccar:
     console: false
     queries: false
     full-stack-traces: false
+    protocol:
+      name: "PositionGeofence"
   mail:
     debug: false
   database:
     driver: "com.mongodb.MongoDriver"
     url: "mongodb://localhost:27017/mcs_position_geofence"
-    user: "yourUser"
-    password: "yourPassword"
   atrack:
     custom: false
   intellitrac:
     port: 0
 
+
+logger:
+  attributes: time,position,speed,course,accuracy,result
 ---
-# Configuración para el perfil "debug"
-spring:
-  profiles: debug
+# # Configuración para el perfil "debug"
+# spring:
+#   config:
+#     activate:
+#       on-profile: debug
 
-traccar:
-  use-environment-variables: true
-  web:
-    # Uso del tema simple que aparece en el debug.xml original
-    path: "./traccar-web/simple"
-    debug: true
-    console: true
-  geocoder:
-    type: "pluscodes"
-  media:
-    path: "./target/media"
-  logger:
-    console: true
-    queries: false
-    full-stack-traces: true
-  mail:
-    debug: true
-  database:
-    # En modo debug se usa la configuración para H2 según el debug.xml
-    driver: "org.h2.Driver"
-    url: "jdbc:h2:./target/database"
-    user: "sa"
-    password: ""
-  atrack:
-    custom: true
-  intellitrac:
-    port: 6037
+# traccar:
+#   use-environment-variables: true
+#   web:
+#     # Uso del tema simple que aparece en el debug.xml original
+#     path: "./traccar-web/simple"
+#     debug: true
+#     console: true
+#   geocoder:
+#     type: "pluscodes"
+#   media:
+#     path: "./target/media"
+#   logger:
+#     console: true
+#     queries: false
+#     full-stack-traces: true
+#   mail:
+#     debug: true
+#   database:
+#     # En modo debug se usa la configuración para H2 según el debug.xml
+#     driver: "org.h2.Driver"
+#     url: "jdbc:h2:./target/database"
+#     user: "sa"
+#     password: ""
+#   atrack:
+#     custom: true
+#   intellitrac:
+#     port: 6037
 
-
+# Configuración para el Gateway (aplica para todos los perfiles)
 gateway:
   device:
-    baseUrl: http://api-gateway-or-device-service:9000   # Cambia a la URL real de tu servicio
+    baseUrl: https://demo.traccar.org/api  # Cambia a la URL real de tu servicio
   user:
-    baseUrl: http://api-gateway-or-user-service:9001
+    baseUrl: https://demo.traccar.org/api
   notification:
-    baseUrl: http://api-gateway-or-notification-service:9002
+    baseUrl: https://demo.traccar.org/api
   server:
-    baseUrl: http://api-gateway-or-server-service:9003
+    baseUrl: https://demo.traccar.org/api
+
+system:
+  properties:
+    net.fortuna.ical4j.timezone.cache.impl: net.fortuna.ical4j.util.MapTimeZoneCache
+
+broadcast:
+  exchange: traccarExchange
+  routing-key: broadcast
+

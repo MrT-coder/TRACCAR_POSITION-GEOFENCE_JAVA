@@ -4,8 +4,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class ExtendedModel extends BaseModel {
+import org.springframework.data.mongodb.core.mapping.Field;
 
+public class ExtendedModel extends BaseModel {
+    @Field("extendedAttributes")
     private Map<String, Object> attributes = new LinkedHashMap<>();
 
     public boolean hasAttribute(String key) {

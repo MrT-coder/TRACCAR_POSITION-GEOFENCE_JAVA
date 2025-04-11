@@ -4,8 +4,8 @@ import com.traccar.PositionGeofence.modelo.Geofence;
 
 public interface GeofenceService {
     List<Geofence> getAllGeofences();
-    Geofence getGeofenceById(String id);
+    Geofence getGeofenceById(Long id);
     Geofence createGeofence(Geofence geofence);
-    Geofence updateGeofence(String id, Geofence geofence);
-    void deleteGeofence(String id);
+    Geofence updateGeofence(Long id, Geofence geofence);
+    void deleteGeofence(Long id);
 }

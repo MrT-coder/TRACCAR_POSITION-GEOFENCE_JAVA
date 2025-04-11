@@ -20,7 +20,7 @@ public class GeofenceServiceImpl implements GeofenceService {
     }
 
     @Override
-    public Geofence getGeofenceById(String id) {
+    public Geofence getGeofenceById(Long id) {
         Optional<Geofence> optional = geofenceRepository.findById(id);
         return optional.orElse(null); // Podrías lanzar una excepción personalizada si no se encuentra
     }
@@ -31,7 +31,7 @@ public class GeofenceServiceImpl implements GeofenceService {
     }
 
     @Override
-    public Geofence updateGeofence(String id, Geofence geofence) {
+    public Geofence updateGeofence(Long id, Geofence geofence) {
         // Primero validamos que exista la geocerca
         if (!geofenceRepository.existsById(id)) {
             return null;
@@ -41,7 +41,7 @@ public class GeofenceServiceImpl implements GeofenceService {
     }
 
     @Override
-    public void deleteGeofence(String id) {
+    public void deleteGeofence(Long id) {
         geofenceRepository.deleteById(id);
     }
 }

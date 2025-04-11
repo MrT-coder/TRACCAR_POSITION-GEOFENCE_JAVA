@@ -10,6 +10,7 @@ import java.util.TreeMap;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.traccar.PositionGeofence.helper.ClassScanner;
 
 
 public class Permission {

@@ -39,7 +39,7 @@ public class PositionController {
      * GET /positions/{id} para obtener una posición por su ID.
      */
     @GetMapping("/{id}")
-    public Position getPositionById(@PathVariable String id) {
+    public Position getPositionById(@PathVariable Long id) {
         return positionService.getPositionById(id);
     }
 

@@ -22,8 +22,14 @@ public class ServerClientImpl implements ServerClient {
     @Override
     public List<Server> getServersById(Long serverId) throws Exception {
         // Construimos el endpoint, por ejemplo: http://<baseUrl>/servers/{id}
-        String url = serverServiceBaseUrl + "/servers/" + serverId;
+        String url = serverServiceBaseUrl + "/server/" + serverId;
         Server[] servers = restTemplate.getForObject(url, Server[].class);
         return (servers != null) ? Arrays.asList(servers) : List.of();
+    }
+
+    @Override
+    public Server getServer() throws Exception {
+        String url = serverServiceBaseUrl + "/server"; // Construimos el endpoint
+        return restTemplate.getForObject(url, Server.class);
     }
 }

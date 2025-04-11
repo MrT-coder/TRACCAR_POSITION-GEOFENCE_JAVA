@@ -61,13 +61,13 @@ public class Event extends Message {
         this.eventTime = eventTime;
     }
 
-    private String positionId;
+    private Long positionId;
 
-    public String getPositionId() {
+    public Long getPositionId() {
         return positionId;
     }
 
-    public void setPositionId(String positionId) {
+    public void setPositionId(Long positionId) {
         this.positionId = positionId;
     }
 

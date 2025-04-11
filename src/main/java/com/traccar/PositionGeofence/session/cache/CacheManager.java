@@ -78,8 +78,11 @@ public class CacheManager implements BroadcastInterface {
         this.userClient = userClient;
         this.notificationClient = notificationClient;
         this.serverClient = serverClient;
-        // Obtiene el servidor a través del ServerClient (por ejemplo, se asume que el id global es 1)
-        this.server = serverClient.getServersById(1L).stream().findFirst().orElse(null);
+       
+        this.server = serverClient.getServer();
+        if (this.server == null) {
+            throw new Exception("Server not found");
+        }
         broadcastService.registerListener(this);
     }
 

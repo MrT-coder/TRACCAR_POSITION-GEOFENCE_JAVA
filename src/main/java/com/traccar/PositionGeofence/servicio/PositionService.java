@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import com.traccar.PositionGeofence.mensajeria.PositionMessageProducer;
 import com.traccar.PositionGeofence.modelo.Position;
 import com.traccar.PositionGeofence.repositorio.PositionRepository;
+import com.traccar.PositionGeofence.session.cache.CacheManager;
 
 import java.util.Date;
 import java.util.List;
@@ -19,19 +20,26 @@ public class PositionService {
     @Autowired
     private PositionMessageProducer messageProducer;
 
+    private final CacheManager cacheManager;
+
+    public PositionService(PositionRepository positionRepository, CacheManager cacheManager) {
+        this.positionRepository = positionRepository;
+        this.cacheManager = cacheManager;
+    }
     /**
-     * Guarda la posición en la base de datos y la envía a RabbitMQ para que el microservicio de Events la procese.
+     * Guarda la posición en MongoDB y actualiza la caché.
      *
-     * @param position la posición a guardar
-     * @return la posición guardada
+     * @param position El objeto Position a almacenar.
+     * @return La posición guardada (con el id asignado, si corresponde).
      */
     public Position savePosition(Position position) {
-        // Persistir la posición en MongoDB
-        Position saved = positionRepository.save(position);
-        // Publicar la posición en RabbitMQ para que el microservicio de Events la consuma
-        messageProducer.sendPositionMessage(saved);
-        return saved;
+        Position savedPosition = positionRepository.save(position);
+        // Actualiza la última posición del dispositivo en la caché
+        cacheManager.updatePosition(savedPosition);
+        messageProducer.sendPositionMessage(savedPosition);
+        return savedPosition;
     }
+    
     
     /**
      * Obtiene posiciones filtradas por deviceId y, opcionalmente, por un rango de fechas.
@@ -56,7 +64,7 @@ public class PositionService {
     /**
      * Obtiene una posición por su ID.
      */
-    public Position getPositionById(String id) {
+    public Position getPositionById(Long id) {
         return positionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Position not found"));
     }

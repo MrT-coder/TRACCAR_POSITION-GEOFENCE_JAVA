@@ -12,7 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "mcs_positions")
 public class Position {
     @Id
-    private String id;
+    private Long id;
 
     private Long deviceId;
 
@@ -176,6 +176,10 @@ public class Position {
     public Position() {
     }
 
+    public Position(String protocol) {
+        this.protocol = protocol;
+    }
+    
     public Position(String protocol, Date deviceTime, Date fixTime, double latitude, double longitude) {
         this.protocol = protocol;
         this.deviceTime = deviceTime;
@@ -186,11 +190,11 @@ public class Position {
 
     // Getters y setters
 
-    public String getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Long id) {
        this.id = id;
     }
 

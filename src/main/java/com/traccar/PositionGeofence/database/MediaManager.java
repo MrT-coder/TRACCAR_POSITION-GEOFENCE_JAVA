@@ -25,7 +25,7 @@ public class MediaManager {
 
     private final String path;
 
-    public MediaManager(@Value("${media.path}") String path) {
+    public MediaManager(@Value("${traccar.media.path}") String path) {
         this.path = path;
     }
 

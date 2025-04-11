@@ -1,13 +1,14 @@
 package com.traccar.PositionGeofence.config;
 
 
-import com.traccar.PositionGeofence.helper.Log;
+//import com.traccar.PositionGeofence.helper.Log;
 
 import jakarta.annotation.PostConstruct;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Objects;
 import java.util.Properties;
 
 @Configuration
@@ -32,7 +33,7 @@ public class Config {
         // properties.put("some.property", someProperty);
 
         // Configura el logger según la configuración (esto es opcional, según cómo manejes Log)
-        Log.setupLogger(this);
+       // Log.setupLogger(this);
     }
 
     public boolean hasKey(String key) {
@@ -58,6 +59,7 @@ public class Config {
         return defaultValue;
     }
 
+
     public int getInteger(String key, int defaultValue) {
         String value = getString(key, null);
         if (value != null) {
@@ -66,13 +68,16 @@ public class Config {
         return defaultValue;
     }
 
-    public long getLong(String key, long defaultValue) {
-        String value = getString(key, null);
+    public long getLong(ConfigKey<Long> key) {
+        String value = getString(key.getKey(), null);
         if (value != null) {
             return Long.parseLong(value);
+        } else {
+            Long defaultValue = key.getDefaultValue();
+            return Objects.requireNonNullElse(defaultValue, 0L);
         }
-        return defaultValue;
     }
+
 
     public double getDouble(String key, double defaultValue) {
         String value = getString(key, null);
@@ -108,4 +113,9 @@ public class Config {
         this.someProperty = someProperty;
         properties.put("some.property", someProperty);  // Opcional: volcarlo en el objeto properties
     }
+
+    public String getString(ConfigKey<String> key) {
+        return getString(key.getKey(), key.getDefaultValue());
+    }
+
 }

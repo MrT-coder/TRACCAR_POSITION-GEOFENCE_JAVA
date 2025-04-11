@@ -30,7 +30,7 @@ public class StandardLoggingHandler extends ChannelDuplexHandler {
 
     // Se puede inyectar el protocol mediante constructor, 
     // o, si lo prefieres, también se puede inyectar con @Value directamente.
-    public StandardLoggingHandler(@Value("${logger.protocol.name}") String protocol) {
+    public StandardLoggingHandler(@Value("${traccar.logger.protocol.name}") String protocol) {
         this.protocol = protocol;
     }
 

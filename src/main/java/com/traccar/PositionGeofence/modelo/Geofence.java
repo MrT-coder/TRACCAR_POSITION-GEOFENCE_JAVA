@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.traccar.PositionGeofence.geofence.GeofenceGeometry;
@@ -32,7 +32,8 @@ public class Geofence extends ExtendedModel implements Schedulable {
      * Puedes almacenar directamente este string o parsearlo para manejar geometría real.
      */
     private String area;
-
+    
+    @Field("geofenceAttributes")
     private Map<String, Object> attributes;
 
     // Variable interna que almacena la geometría ya parseada

@@ -60,7 +60,7 @@ public abstract class TrackerServer implements TrackerConnector {
 
             @Override
             protected void addProtocolHandlers(PipelineBuilder pipeline) {
-                TrackerServer.this.addProtocolHandlers(pipeline);
+                TrackerServer.this.addProtocolHandlers((com.traccar.PositionGeofence.protocol.PipelineBuilder) pipeline);
             }
         };
 

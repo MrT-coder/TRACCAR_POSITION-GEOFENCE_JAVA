@@ -26,7 +26,7 @@ public class GeofenceController {
 
     // Endpoint para obtener una geocerca por su ID
     @GetMapping("/{id}")
-    public ResponseEntity<Geofence> getGeofenceById(@PathVariable String id) {
+    public ResponseEntity<Geofence> getGeofenceById(@PathVariable long id) {
         Geofence geofence = geofenceService.getGeofenceById(id);
         if (geofence == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -43,7 +43,7 @@ public class GeofenceController {
 
     // Endpoint para actualizar una geocerca existente
     @PutMapping("/{id}")
-    public ResponseEntity<Geofence> updateGeofence(@PathVariable String id, @RequestBody Geofence geofence) {
+    public ResponseEntity<Geofence> updateGeofence(@PathVariable long id, @RequestBody Geofence geofence) {
         Geofence updated = geofenceService.updateGeofence(id, geofence);
         if (updated == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -53,7 +53,7 @@ public class GeofenceController {
 
     // Endpoint para eliminar una geocerca por su ID
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteGeofence(@PathVariable String id) {
+    public ResponseEntity<Void> deleteGeofence(@PathVariable long id) {
         geofenceService.deleteGeofence(id);
         return ResponseEntity.noContent().build();
     }

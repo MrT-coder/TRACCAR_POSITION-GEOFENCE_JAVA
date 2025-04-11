@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 @Repository
-public interface PositionRepository extends MongoRepository<Position, String> {
+public interface PositionRepository extends MongoRepository<Position, Long> {
 
     // Encuentra todas las posiciones de un dispositivo
     List<Position> findByDeviceId(Long deviceId);
