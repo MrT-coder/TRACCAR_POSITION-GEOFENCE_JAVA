@@ -38,8 +38,6 @@ import java.util.stream.Stream;
 @Sharable
 public class ProcessingHandler extends ChannelInboundHandlerAdapter implements BufferingManager.Callback {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessingHandler.class);
-
     private final CacheManager cacheManager;
     private final PositionLogger positionLogger;
     private final BufferingManager bufferingManager;

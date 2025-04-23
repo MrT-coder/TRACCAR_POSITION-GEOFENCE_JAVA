@@ -121,7 +121,7 @@ public abstract class BaseProtocolEncoder extends ChannelOutboundHandlerAdapter 
      * Método para codificar un comando; por defecto, devuelve null. Se espera que las subclases
      * implementen la lógica de codificación para el protocolo específico.
      */
-    protected Object encodeCommand(Command command) {
+    public Object encodeCommand(Command command) {
         return null;
     }
 }

@@ -11,7 +11,9 @@ import io.netty.channel.socket.DatagramPacket;
 
 import java.net.InetSocketAddress;
 
-import com.traccar.PositionGeofence.NetworkMessage;
+import com.traccar.PositionGeofence.protocol.NetworkMessage;
+
+
 
 public class NetworkMessageHandler extends ChannelDuplexHandler {
 

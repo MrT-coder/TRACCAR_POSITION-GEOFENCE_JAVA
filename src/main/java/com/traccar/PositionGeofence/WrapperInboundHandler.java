@@ -1,6 +1,8 @@
 package com.traccar.PositionGeofence;
 
 
+import com.traccar.PositionGeofence.protocol.NetworkMessage;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
 

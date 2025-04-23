@@ -1,6 +1,4 @@
-package com.traccar.PositionGeofence.protocol;
-
-import com.traccar.PositionGeofence.LifecycleObject;
+package com.traccar.PositionGeofence;
 
 import io.netty.channel.group.ChannelGroup;
 

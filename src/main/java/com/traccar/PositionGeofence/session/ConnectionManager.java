@@ -71,7 +71,7 @@ public class ConnectionManager implements BroadcastInterface {
         this.broadcastService = broadcastService;
         this.deviceClient = deviceClient;
         deviceTimeout = config.getLong(Keys.STATUS_TIMEOUT); 
-        showUnknownDevices = config.getBoolean("web.show.unknown.devices",false);
+        showUnknownDevices = config.getBoolean(Keys.WEB_SHOW_UNKNOWN_DEVICES);
         broadcastService.registerListener(this);
     }
 
@@ -99,7 +99,7 @@ public class ConnectionManager implements BroadcastInterface {
         }
 
         // Se obtiene el dispositivo vía REST
-        Device device = deviceClient.getDeviceById(uniqueIds[0]);
+        Device device = deviceClient.getDevicesByUniqueId(uniqueIds[0]);
         String firstUniqueId = uniqueIds[0];
         if (device == null) {
             LOGGER.warn("Unknown device - " + String.join(" ", uniqueIds)
@@ -134,7 +134,7 @@ public class ConnectionManager implements BroadcastInterface {
         return deviceSession;
     }
 
-    public void deviceDisconnected(Channel channel, boolean supportsOffline) {
+    public void deviceDisconnected(Channel channel, boolean supportsOffline) throws Exception {
         SocketAddress remoteAddress = channel.remoteAddress();
         if (remoteAddress != null) {
             ConnectionKey connectionKey = new ConnectionKey(channel, remoteAddress);
@@ -152,7 +152,7 @@ public class ConnectionManager implements BroadcastInterface {
         }
     }
 
-    public void deviceUnknown(long deviceId) {
+    public void deviceUnknown(long deviceId) throws Exception {
         updateDevice(deviceId, Device.STATUS_UNKNOWN, null);
         removeDeviceSession(deviceId);
     }
@@ -176,9 +176,10 @@ public class ConnectionManager implements BroadcastInterface {
      * - Actualiza el estado y la última actualización.
      * - Propaga el cambio mediante BroadcastService.
      * - Actualiza timeouts de inactividad.
+     * @throws Exception 
      */
-    public void updateDevice(long deviceId, String status, Date time) {
-        Device device = deviceClient.getDeviceById(String.valueOf(deviceId));
+    public void updateDevice(long deviceId, String status, Date time) throws Exception {
+        Device device = deviceClient.getDeviceById(deviceId);
         if (device == null) {
             LOGGER.warn("Device not found for id: {}", deviceId);
             return;

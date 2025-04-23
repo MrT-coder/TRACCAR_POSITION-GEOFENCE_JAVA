@@ -1,8 +1,5 @@
 package com.traccar.PositionGeofence.protocol;
 
-import io.netty.bootstrap.AbstractBootstrap;
-import io.netty.bootstrap.Bootstrap;
-import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInboundHandler;
@@ -10,18 +7,18 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOutboundHandler;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.channel.socket.nio.NioDatagramChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import jakarta.annotation.PostConstruct;
+import com.google.inject.Injector;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.stereotype.Component;
 
+import com.traccar.PositionGeofence.BaseProtocolDecoder;
+import com.traccar.PositionGeofence.PositionGeofenceApplication;
 import com.traccar.PositionGeofence.ProcessingHandler;
+import com.traccar.PositionGeofence.TrackerConnector;
 import com.traccar.PositionGeofence.WrapperInboundHandler;
 import com.traccar.PositionGeofence.WrapperOutboundHandler;
+import com.traccar.PositionGeofence.config.Config;
+import com.traccar.PositionGeofence.config.Keys;
 import com.traccar.PositionGeofence.handler.network.AcknowledgementHandler;
 import com.traccar.PositionGeofence.handler.network.MainEventHandler;
 import com.traccar.PositionGeofence.handler.network.NetworkForwarderHandler;
@@ -35,66 +32,25 @@ import java.util.Map;
 @Component
 public abstract class BasePipelineFactory extends ChannelInitializer<Channel> {
 
-    // Inyección directa de propiedades desde application.properties
-    @Value("${tracker.protocol.name}")
-    protected String protocol;
+    private final Injector injector;
+    private final TrackerConnector connector;
+    private final Config config;
+    private final String protocol;
+    private final int timeout;
 
-    @Value("${tracker.protocol.ssl:false}")
-    protected boolean secure;
-
-    @Value("${tracker.protocol.timeout:0}")
-    protected int protocolTimeout;
-
-    @Value("${server.timeout:30}")
-    protected int serverTimeout;
-
-    @Value("${tracker.protocol.port}")
-    protected int protocolPort;
-
-    @Value("${tracker.server.forward:false}")
-    protected boolean serverForward;
-
-    @Value("${server.instant.ack:false}")
-    protected boolean serverInstantAck;
-
-    @Value("${tracker.protocol.datagram:false}")
-    protected boolean datagram;
-
-    @Autowired
-    protected TrackerConnector connector;
-
-    @Autowired
-    protected AutowireCapableBeanFactory beanFactory;
-
-    // Bootstrap de Netty que se configura en init()
-    protected AbstractBootstrap<?, ?> bootstrap;
-
-    // Timeout efectivo (si protocolTimeout es 0 se usa serverTimeout)
-    protected int timeout;
-
-    public BasePipelineFactory(TrackerServer trackerServer, boolean secure2) {
-        //TODO Auto-generated constructor stub
-    }
-
-    @PostConstruct
-    private void init() {
-        // Configura el timeout efectivo
-        this.timeout = (protocolTimeout == 0 ? serverTimeout : protocolTimeout);
-
-        // Configura el bootstrap según si se usa UDP (datagram) o TCP
-        if (datagram) {
-            bootstrap = new Bootstrap()
-                    .group(EventLoopGroupFactory.getWorkerGroup())
-                    .channel(NioDatagramChannel.class)
-                    .handler(this);
+  public BasePipelineFactory(TrackerConnector connector, Config config, String protocol) {
+        this.injector = PositionGeofenceApplication.getInjector();
+        this.connector = connector;
+        this.config = config;
+        this.protocol = protocol;
+        int timeout = config.getInteger(Keys.PROTOCOL_TIMEOUT.withPrefix(protocol));
+        if (timeout == 0) {
+            this.timeout = config.getInteger(Keys.SERVER_TIMEOUT);
         } else {
-            bootstrap = new ServerBootstrap()
-                    .group(EventLoopGroupFactory.getBossGroup(), EventLoopGroupFactory.getWorkerGroup())
-                    .channel(NioServerSocketChannel.class)
-                    .childHandler(this);
+            this.timeout = timeout;
         }
     }
-
+   
     /**
      * Método abstracto para agregar handlers de transporte (por ejemplo, SSL, decodificadores de frames, etc.).
      */
@@ -105,70 +61,7 @@ public abstract class BasePipelineFactory extends ChannelInitializer<Channel> {
      */
     protected abstract void addProtocolHandlers(PipelineBuilder pipeline);
 
-    // Método auxiliar para inyectar dependencias en objetos creados manualmente.
-    private <T> T injectMembers(T object) {
-        beanFactory.autowireBean(object);
-        return object;
-    }
-
-    @Override
-    protected void initChannel(Channel channel) {
-        ChannelPipeline pipeline = channel.pipeline();
-
-        // 1. Agregar handlers de transporte
-        addTransportHandlers(pipeline::addLast);
-
-        // 2. Agregar IdleStateHandler si se usa TCP y se configuró un timeout
-        if (timeout > 0 && !connector.isDatagram()) {
-            pipeline.addLast(new IdleStateHandler(timeout, 0, 0));
-        }
-
-        // 3. Registrar la apertura del canal
-        pipeline.addLast(new OpenChannelHandler(connector));
-
-        // 4. Agregar NetworkForwarderHandler si el forwarding está habilitado
-        if (serverForward) {
-            pipeline.addLast(injectMembers(new NetworkForwarderHandler(protocolPort)));
-        }
-
-        // 5. Agregar NetworkMessageHandler para transformar mensajes a NetworkMessage
-        pipeline.addLast(new NetworkMessageHandler());
-
-        // 6. Agregar StandardLoggingHandler para depuración (log de mensajes)
-        pipeline.addLast(injectMembers(new StandardLoggingHandler(protocol)));
-
-        // 7. Agregar AcknowledgementHandler si se usa TCP y no se habilita el ACK instantáneo
-        if (!connector.isDatagram() && !serverInstantAck) {
-            pipeline.addLast(new AcknowledgementHandler());
-        }
-
-        // 8. Agregar handlers específicos del protocolo (decoders/encoders)
-        addProtocolHandlers(handler -> {
-            if (handler instanceof BaseProtocolDecoder || handler instanceof BaseProtocolEncoder) {
-                injectMembers(handler);
-            } else {
-                if (handler instanceof ChannelInboundHandler) {
-                    handler = new WrapperInboundHandler((ChannelInboundHandler) handler);
-                } else if (handler instanceof ChannelOutboundHandler) {
-                    handler = new WrapperOutboundHandler((ChannelOutboundHandler) handler);
-                }
-            }
-            pipeline.addLast(handler);
-        });
-
-        // 9. Agregar handlers finales de procesamiento y direccionamiento, obtenidos vía Spring
-        pipeline.addLast(beanFactory.getBean(RemoteAddressHandler.class));
-        pipeline.addLast(beanFactory.getBean(ProcessingHandler.class));
-        pipeline.addLast(beanFactory.getBean(MainEventHandler.class));
-    }
-
-    /**
-     * Interfaz funcional para facilitar la adición de handlers al pipeline.
-     */
-    @FunctionalInterface
-    public interface PipelineBuilder {
-        void addLast(ChannelHandler handler);
-    }
+ 
 
     /**
      * Método utilitario para obtener un handler específico del pipeline.
@@ -187,5 +80,49 @@ public abstract class BasePipelineFactory extends ChannelInitializer<Channel> {
             }
         }
         return null;
+    }
+
+    private <T> T injectMembers(T object) {
+        injector.injectMembers(object);
+        return object;
+    }
+
+    @Override
+    protected void initChannel(Channel channel) {
+        final ChannelPipeline pipeline = channel.pipeline();
+
+        addTransportHandlers(pipeline::addLast);
+
+        if (timeout > 0 && !connector.isDatagram()) {
+            pipeline.addLast(new IdleStateHandler(timeout, 0, 0));
+        }
+        pipeline.addLast(new OpenChannelHandler(connector));
+        if (config.hasKey(Keys.SERVER_FORWARD)) {
+            int port = config.getInteger(Keys.PROTOCOL_PORT.withPrefix(protocol));
+            pipeline.addLast(injectMembers(new NetworkForwarderHandler(port)));
+        }
+        pipeline.addLast(new NetworkMessageHandler());
+        pipeline.addLast(injectMembers(new StandardLoggingHandler(protocol)));
+
+        if (!connector.isDatagram() && !config.getBoolean(Keys.SERVER_INSTANT_ACKNOWLEDGEMENT)) {
+            pipeline.addLast(new AcknowledgementHandler());
+        }
+
+        addProtocolHandlers(handler -> {
+            if (handler instanceof BaseProtocolDecoder || handler instanceof BaseProtocolEncoder) {
+                injectMembers(handler);
+            } else {
+                if (handler instanceof ChannelInboundHandler channelHandler) {
+                    handler = new WrapperInboundHandler(channelHandler);
+                } else if (handler instanceof ChannelOutboundHandler channelHandler) {
+                    handler = new WrapperOutboundHandler(channelHandler);
+                }
+            }
+            pipeline.addLast(handler);
+        });
+
+        pipeline.addLast(injector.getInstance(RemoteAddressHandler.class));
+        pipeline.addLast(injector.getInstance(ProcessingHandler.class));
+        pipeline.addLast(injector.getInstance(MainEventHandler.class));
     }
 }

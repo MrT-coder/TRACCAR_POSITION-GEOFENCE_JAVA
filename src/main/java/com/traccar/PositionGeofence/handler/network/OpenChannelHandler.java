@@ -1,9 +1,9 @@
 package com.traccar.PositionGeofence.handler.network;
 
+import com.traccar.PositionGeofence.TrackerConnector;
+
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
-
-import com.traccar.PositionGeofence.protocol.TrackerConnector;
 
 public class OpenChannelHandler extends ChannelDuplexHandler {
 

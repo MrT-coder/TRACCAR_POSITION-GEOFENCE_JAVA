@@ -15,6 +15,8 @@ import io.netty.util.concurrent.EventExecutor;
 
 import java.net.SocketAddress;
 
+import com.traccar.PositionGeofence.protocol.NetworkMessage;
+
 public class WrapperContext implements ChannelHandlerContext {
 
     private ChannelHandlerContext context;

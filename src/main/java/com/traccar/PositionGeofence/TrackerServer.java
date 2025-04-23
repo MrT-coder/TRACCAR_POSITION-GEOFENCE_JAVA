@@ -1,4 +1,4 @@
-package com.traccar.PositionGeofence.protocol;
+package com.traccar.PositionGeofence;
 
 import io.netty.bootstrap.AbstractBootstrap;
 import io.netty.bootstrap.Bootstrap;
@@ -13,8 +13,13 @@ import io.netty.util.concurrent.GlobalEventExecutor;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import com.traccar.PositionGeofence.config.Config;
+import com.traccar.PositionGeofence.config.Keys;
+import com.traccar.PositionGeofence.protocol.BasePipelineFactory;
+import com.traccar.PositionGeofence.protocol.EventLoopGroupFactory;
+import com.traccar.PositionGeofence.protocol.PipelineBuilder;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -25,31 +30,33 @@ public abstract class TrackerServer implements TrackerConnector {
 
     private final boolean datagram;
     private final boolean secure;
-    private final AbstractBootstrap<?, ?> bootstrap;
+    @SuppressWarnings("rawtypes")
+    private final AbstractBootstrap bootstrap;
     private final int port;
     private final String address;
     private final ChannelGroup channelGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
-    // Usamos @Value para inyectar las propiedades desde application.properties
-    public TrackerServer(
-            @Value("${protocol.ssl:false}") boolean secure,
-            @Value("${protocol.address:0.0.0.0}") String address,
-            @Value("${protocol.port:5050}") int port,
-            @Value("${protocol.datagram:false}") boolean datagram) {
+    @Override
+    public boolean isDatagram() {
+        return datagram;
+    }
 
-        this.secure = secure;
-        this.address = address;
-        this.port = port;
-        this.datagram = datagram;
+    @Override
+    public boolean isSecure() {
+        return secure;
+    }
 
-        // Para el MVP, usamos un BasePipelineFactory mínimo. Aquí se inyecta un protocolo por defecto ("default")
-        // y un timeout fijo (60 segundos); estos valores se podrán mejorar o parametrizar.
-        BasePipelineFactory pipelineFactory = new BasePipelineFactory(this, secure) {
+
+    public TrackerServer(Config config, String protocol, boolean datagram) {
+        secure = config.getBoolean(Keys.PROTOCOL_SSL.withPrefix(protocol));
+        address = config.getString(Keys.PROTOCOL_ADDRESS.withPrefix(protocol));
+        port = config.getInteger(Keys.PROTOCOL_PORT.withPrefix(protocol));
+
+        BasePipelineFactory pipelineFactory = new BasePipelineFactory(this, config, protocol) {
             @Override
             protected void addTransportHandlers(PipelineBuilder pipeline) {
                 try {
-                    if (secure) {
-                        // Se crea el SslHandler con el contexto por defecto
+                    if (isSecure()) {
                         SSLEngine engine = SSLContext.getDefault().createSSLEngine();
                         pipeline.addLast(new SslHandler(engine));
                     }
@@ -60,10 +67,11 @@ public abstract class TrackerServer implements TrackerConnector {
 
             @Override
             protected void addProtocolHandlers(PipelineBuilder pipeline) {
-                TrackerServer.this.addProtocolHandlers((com.traccar.PositionGeofence.protocol.PipelineBuilder) pipeline);
+                TrackerServer.this.addProtocolHandlers(pipeline, config);
             }
         };
 
+        this.datagram = datagram;
         if (datagram) {
             bootstrap = new Bootstrap()
                     .group(EventLoopGroupFactory.getWorkerGroup())
@@ -77,8 +85,9 @@ public abstract class TrackerServer implements TrackerConnector {
         }
     }
 
-    // Método abstracto para que las subclases agreguen los handlers específicos del protocolo
-    protected abstract void addProtocolHandlers(PipelineBuilder pipeline);
+    // Método abstracto para que las subclases agreguen los handlers específicos del
+    // protocolo
+    protected abstract void addProtocolHandlers(PipelineBuilder pipeline, Config config);
 
     public int getPort() {
         return port;
@@ -110,7 +119,7 @@ public abstract class TrackerServer implements TrackerConnector {
         }
     }
 
-/**
+    /**
      * Detiene el servidor antes de destruir el bean.
      */
     @PreDestroy
@@ -119,14 +128,5 @@ public abstract class TrackerServer implements TrackerConnector {
         channelGroup.close().awaitUninterruptibly();
     }
 
-    @Override
-    public boolean isDatagram() {
-        return datagram;
-    }
-
-    @Override
-    public boolean isSecure() {
-        return secure;
-    }
-
+    
 }

@@ -30,33 +30,48 @@ public class DeviceGatewayController {
     }
 
     /**
-     * Endpoint para obtener la información de un dispositivo dado su id.
+     * Endpoint para obtener todos los dispositivos.
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<Device> getDevice(@PathVariable("id") String id) {
-        Device device = deviceService.getDeviceById(id);
-        if (device != null) {
-            return ResponseEntity.ok(device);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    @GetMapping
+    public ResponseEntity<List<Device>> getDevices() {
+        List<Device> devices = deviceService.getDevices();
+        return ResponseEntity.ok(devices);
+    }  
+
+    /**
+     * Endpoint para actualizar un dispositivo.
+     */
+    @PutMapping("/{deviceId}")
+    public ResponseEntity<Device> updateDevice(@PathVariable Long deviceId, @RequestBody Device device) {
+        device.setId(deviceId); // Asegúrate de que el ID del dispositivo en el cuerpo de la solicitud sea correcto
+        Device updatedDevice = deviceService.updateDevice(device);
+        return ResponseEntity.ok(updatedDevice);
     }
 
     /**
-     * Endpoint para obtener los usuarios asociados a un dispositivo.
+     * Endpoint para obtener los dispositivos de un usuario específico.
      */
-    @GetMapping("/{id}/users")
-    public ResponseEntity<List<User>> getDeviceUsers(@PathVariable("id") Long deviceId) {
-        List<User> users = userService.getUsersByDeviceId(deviceId);
-        return ResponseEntity.ok(users);
+    @GetMapping("/{userId}")
+    public ResponseEntity<List<Device>> getDevicesByUser(@PathVariable Long userId) throws Exception {
+        List<Device> devices = deviceService.getDevicesByUser(userId);
+        return ResponseEntity.ok(devices);
     }
 
     /**
-     * Endpoint para obtener las notificaciones configuradas para el dispositivo.
+     * Endpoint para obtener un dispositivo por su Unique ID.
      */
-    @GetMapping("/{id}/notifications")
-    public ResponseEntity<List<Notification>> getDeviceNotifications(@PathVariable("id") Long deviceId) {
-        List<Notification> notifications = notificationService.getDeviceNotifications(deviceId);
-        return ResponseEntity.ok(notifications);
+    @GetMapping("/{uniqueId}")
+    public ResponseEntity<Device> getDevicesByUniqueId(@PathVariable String uniqueId) throws Exception {
+        Device devices = deviceService.getDevicesByUniqueId(uniqueId);
+        return ResponseEntity.ok(devices);
+    }
+
+    /**
+     Endpoint para obtener los dispositivos de un deviceid específico.
+     */
+    @GetMapping("/{deviceId}")
+    public ResponseEntity<Device> getDeviceById(@PathVariable Long deviceId) throws Exception {
+        Device device = deviceService.getDeviceById(deviceId);
+        return ResponseEntity.ok(device);
     }
 }

@@ -5,13 +5,12 @@ import java.net.SocketAddress;
 import java.util.Collection;
 
 import com.traccar.PositionGeofence.modelo.Command;
-import com.traccar.PositionGeofence.protocol.TrackerServer;
 
 public interface Protocol {
 
     String getName();
 
-    Collection<TrackerServer> getConnectorList();
+    Collection<TrackerConnector> getConnectorList();
 
     Collection<String> getSupportedDataCommands();
 

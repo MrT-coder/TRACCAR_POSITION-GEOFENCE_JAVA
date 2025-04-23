@@ -8,6 +8,8 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.util.Objects;
 import java.util.Properties;
 
@@ -17,11 +19,6 @@ public class Config {
 
     private boolean useEnvironmentVariables;
 
-    // Si necesitas otras propiedades de configuración, defínelas aquí.
-    // Por ejemplo:
-    private String someProperty;
-
-    // Además, usamos una instancia de Properties para poder reutilizar la lógica de getString, getInteger, etc.
     private final Properties properties = new Properties();
 
     @PostConstruct
@@ -32,44 +29,72 @@ public class Config {
         // Ejemplo: si agregas más propiedades, puedes volcar sus valores:
         // properties.put("some.property", someProperty);
 
-        // Configura el logger según la configuración (esto es opcional, según cómo manejes Log)
-       // Log.setupLogger(this);
     }
 
-    public boolean hasKey(String key) {
-        return (useEnvironmentVariables && System.getenv().containsKey(getEnvironmentVariableName(key)))
+    public boolean hasKey(ConfigKey<?> key) {
+        return hasKey(key.getKey());
+    }
+
+    private boolean hasKey(String key) {
+        return useEnvironmentVariables && System.getenv().containsKey(getEnvironmentVariableName(key))
                 || properties.containsKey(key);
     }
 
-    public String getString(String key, String defaultValue) {
+    public String getString(ConfigKey<String> key) {
+        return getString(key.getKey(), key.getDefaultValue());
+    }
+
+    @Deprecated
+    public String getString(String key) {
         if (useEnvironmentVariables) {
             String value = System.getenv(getEnvironmentVariableName(key));
             if (value != null && !value.isEmpty()) {
                 return value;
             }
         }
-        return properties.getProperty(key, defaultValue);
+        return properties.getProperty(key);
     }
 
-    public boolean getBoolean(String key, boolean defaultValue) {
-        String value = getString(key, null);
+    public String getString(ConfigKey<String> key, String defaultValue) {
+        return getString(key.getKey(), defaultValue);
+    }
+
+    @Deprecated
+    public String getString(String key, String defaultValue) {
+        return hasKey(key) ? getString(key) : defaultValue;
+    }
+
+    public boolean getBoolean(ConfigKey<Boolean> key) {
+        String value = getString(key.getKey());
         if (value != null) {
             return Boolean.parseBoolean(value);
+        } else {
+            Boolean defaultValue = key.getDefaultValue();
+            return Objects.requireNonNullElse(defaultValue, false);
         }
-        return defaultValue;
     }
 
-
-    public int getInteger(String key, int defaultValue) {
-        String value = getString(key, null);
+    public int getInteger(ConfigKey<Integer> key) {
+        String value = getString(key.getKey());
         if (value != null) {
             return Integer.parseInt(value);
+        } else {
+            Integer defaultValue = key.getDefaultValue();
+            return Objects.requireNonNullElse(defaultValue, 0);
         }
-        return defaultValue;
+    }
+
+    public int getInteger(ConfigKey<Integer> key, int defaultValue) {
+        return getInteger(key.getKey(), defaultValue);
+    }
+
+    @Deprecated
+    public int getInteger(String key, int defaultValue) {
+        return hasKey(key) ? Integer.parseInt(getString(key)) : defaultValue;
     }
 
     public long getLong(ConfigKey<Long> key) {
-        String value = getString(key.getKey(), null);
+        String value = getString(key.getKey());
         if (value != null) {
             return Long.parseLong(value);
         } else {
@@ -78,44 +103,32 @@ public class Config {
         }
     }
 
-
-    public double getDouble(String key, double defaultValue) {
-        String value = getString(key, null);
+    public double getDouble(ConfigKey<Double> key) {
+        String value = getString(key.getKey());
         if (value != null) {
             return Double.parseDouble(value);
+        } else {
+            Double defaultValue = key.getDefaultValue();
+            return Objects.requireNonNullElse(defaultValue, 0.0);
         }
-        return defaultValue;
     }
 
-    // Método de prueba para ajustar valores (útil en tests)
-    public void setString(String key, String value) {
-        properties.put(key, value);
+    @VisibleForTesting
+    public void setString(ConfigKey<?> key, String value) {
+        properties.put(key.getKey(), value);
     }
 
     static String getEnvironmentVariableName(String key) {
         return key.replaceAll("\\.", "_").replaceAll("(\\p{Lu})", "_$1").toUpperCase();
     }
 
-    // Getters y setters para las propiedades inyectadas mediante @ConfigurationProperties
-    public boolean isUseEnvironmentVariables() {
+     // getters / setters para @ConfigurationProperties
+
+     public boolean isUseEnvironmentVariables() {
         return useEnvironmentVariables;
     }
 
     public void setUseEnvironmentVariables(boolean useEnvironmentVariables) {
         this.useEnvironmentVariables = useEnvironmentVariables;
     }
-
-    public String getSomeProperty() {
-        return someProperty;
-    }
-
-    public void setSomeProperty(String someProperty) {
-        this.someProperty = someProperty;
-        properties.put("some.property", someProperty);  // Opcional: volcarlo en el objeto properties
-    }
-
-    public String getString(ConfigKey<String> key) {
-        return getString(key.getKey(), key.getDefaultValue());
-    }
-
 }

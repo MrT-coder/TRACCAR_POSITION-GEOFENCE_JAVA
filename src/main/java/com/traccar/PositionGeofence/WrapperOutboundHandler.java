@@ -7,6 +7,8 @@ import io.netty.channel.ChannelPromise;
 
 import java.net.SocketAddress;
 
+import com.traccar.PositionGeofence.protocol.NetworkMessage;
+
 public class WrapperOutboundHandler implements ChannelOutboundHandler {
 
     private final ChannelOutboundHandler handler;

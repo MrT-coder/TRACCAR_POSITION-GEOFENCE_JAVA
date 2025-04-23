@@ -5,39 +5,40 @@ import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
-import com.traccar.PositionGeofence.NetworkMessage;
+import com.traccar.PositionGeofence.config.Config;
+import com.traccar.PositionGeofence.config.Keys;
 import com.traccar.PositionGeofence.helper.BufferUtil;
 import com.traccar.PositionGeofence.helper.NetworkUtil;
 import com.traccar.PositionGeofence.modelo.LogRecord;
+import com.traccar.PositionGeofence.protocol.NetworkMessage;
+import com.traccar.PositionGeofence.session.ConnectionManager;
 
 import java.nio.charset.StandardCharsets;
 
-@Component
 public class StandardLoggingHandler extends ChannelDuplexHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StandardLoggingHandler.class);
 
-    // El nombre del protocolo, se inyecta mediante @Value (configurable en application.properties)
     private final String protocol;
-
-    // Determina si se decodifica el contenido textual del mensaje
+    private ConnectionManager connectionManager;
     private boolean decodeTextData;
 
-    // Se puede inyectar el protocol mediante constructor, 
-    // o, si lo prefieres, también se puede inyectar con @Value directamente.
-    public StandardLoggingHandler(@Value("${traccar.logger.protocol.name}") String protocol) {
+    public StandardLoggingHandler(String protocol) {
         this.protocol = protocol;
     }
 
-    // Inyección de la propiedad para determinar si se decodifica texto (por defecto false)
-    @Value("${logger.text.protocol:false}")
-    public void setDecodeTextData(boolean decodeTextData) {
-        this.decodeTextData = decodeTextData;
+    @Inject
+    public void setConfig(Config config) {
+        decodeTextData = config.getBoolean(Keys.LOGGER_TEXT_PROTOCOL);
+    }
+
+    @Inject
+    public void setConnectionManager(ConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
     }
 
     @Override
@@ -45,8 +46,9 @@ public class StandardLoggingHandler extends ChannelDuplexHandler {
         LogRecord record = createLogRecord(ctx, msg);
         log(ctx, false, record);
         super.channelRead(ctx, msg);
-        // En esta versión, se elimina la llamada a connectionManager.updateLog(record)
-        // ya que el log detallado se delega a sistemas de monitoreo externos.
+        if (record != null) {
+            connectionManager.updateLog(record);
+        }
     }
 
     @Override
@@ -85,4 +87,5 @@ public class StandardLoggingHandler extends ChannelDuplexHandler {
             LOGGER.info(message.toString());
         }
     }
+
 }

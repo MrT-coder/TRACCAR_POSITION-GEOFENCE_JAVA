@@ -1,6 +1,8 @@
 package com.traccar.PositionGeofence.gateway.service;
 
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.traccar.PositionGeofence.client.DeviceClient;
@@ -15,14 +17,22 @@ public class DeviceService {
         this.deviceClient = deviceClient;
     }
 
-    /**
-     * Recupera la información del dispositivo por su ID.
-     * Esto delega la consulta a través del cliente REST.
-     *
-     * @param deviceId Identificador del dispositivo
-     * @return Objeto Device o null si no se encuentra
-     */
-    public Device getDeviceById(String deviceId) {
+   public List<Device> getDevices() {
+        return deviceClient.getDevices();
+    }
+
+    public Device updateDevice(Device device) {
+        return deviceClient.updateDevice(device);
+    }
+
+    public List<Device> getDevicesByUser(long userId) throws Exception {
+        return deviceClient.getDevicesByUser(userId);
+    }
+    public Device getDeviceById(long deviceId) throws Exception {
         return deviceClient.getDeviceById(deviceId);
     }
+    public Device getDevicesByUniqueId(String uniqueId) throws Exception {
+        return deviceClient.getDevicesByUniqueId(uniqueId);
+    }
+
 }

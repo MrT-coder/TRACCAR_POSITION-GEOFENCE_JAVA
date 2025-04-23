@@ -78,11 +78,7 @@ public class CacheManager implements BroadcastInterface {
         this.userClient = userClient;
         this.notificationClient = notificationClient;
         this.serverClient = serverClient;
-       
         this.server = serverClient.getServer();
-        if (this.server == null) {
-            throw new Exception("Server not found");
-        }
         broadcastService.registerListener(this);
     }
 
@@ -134,7 +130,7 @@ public class CacheManager implements BroadcastInterface {
         lock.readLock().lock();
         try {
             if (server == null) {
-                server = serverClient.getServersById(1L).stream().findFirst().orElse(null);
+                server = serverClient.getServer();
             }
             return server;
         } finally {
@@ -193,7 +189,7 @@ public class CacheManager implements BroadcastInterface {
             var references = deviceReferences.computeIfAbsent(deviceId, k -> new HashSet<>());
             if (references.isEmpty()) {
                 // Consultar el Device a través del cliente REST
-                Device device = deviceClient.getDeviceById(String.valueOf(deviceId));
+                Device device = deviceClient.getDeviceById(deviceId);
                 if (device == null) {
                     throw new Exception("Device not found for id " + deviceId);
                 }
@@ -263,7 +259,11 @@ public <T extends BaseModel> void invalidateObject(boolean local, Class<T> clazz
         return;
     }
     if (clazz.equals(Server.class)) {
-        server = serverClient.getServersById(1L).stream().findFirst().orElse(null);
+        server = serverClient.getServer();
+        if (server == null) {
+            LOGGER.error("Server not found for id {}", id);
+            return;
+        }
         return;
     }
     // Crear una consulta MongoDB para buscar el objeto por "id"

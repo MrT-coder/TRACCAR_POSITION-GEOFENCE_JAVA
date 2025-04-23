@@ -20,23 +20,8 @@ public class ServerService {
         this.serverClient = serverClient;
     }
 
-    /**
-     * Obtiene la información del Server dado su ID.
-     * Este método usa el ServerClient para invocar el endpoint correspondiente del API Gateway (o el microservicio de User)
-     * que gestiona la información del servidor.
-     *
-     * @param serverId Identificador del servidor
-     * @return El objeto Server, o null si no se encontró
-     * @throws Exception Si ocurre algún error durante la consulta
-     */
-    public Server getServerById(Long serverId) throws Exception {
-        List<Server> servers = serverClient.getServersById(serverId);
-        if (servers != null && !servers.isEmpty()) {
-            LOGGER.debug("Server found for id {}: {}", serverId, servers.get(0));
-            return servers.get(0);
-        } else {
-            LOGGER.warn("No server found for id {}", serverId);
-            return null;
-        }
+    public Server getServer() throws Exception {
+        LOGGER.info("Fetching server information from the server service.");
+        return serverClient.getServer();
     }
 }

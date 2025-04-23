@@ -1,4 +1,4 @@
-package com.traccar.PositionGeofence.protocol;
+package com.traccar.PositionGeofence;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -7,10 +7,10 @@ import com.traccar.PositionGeofence.config.Keys;
 import com.traccar.PositionGeofence.helper.UnitsConverter;
 import com.traccar.PositionGeofence.helper.model.AttributeUtil;
 import com.traccar.PositionGeofence.modelo.Position;
+import com.traccar.PositionGeofence.protocol.ExtendedObjectDecoder;
 import com.traccar.PositionGeofence.session.ConnectionManager;
 import com.traccar.PositionGeofence.session.DeviceSession;
 import com.traccar.PositionGeofence.session.cache.CacheManager;
-import com.traccar.PositionGeofence.Protocol;
 import com.traccar.PositionGeofence.database.MediaManager;
 //import com.traccar.PositionGeofence.database.StatisticsManager;
 import java.net.InetSocketAddress;
@@ -200,7 +200,7 @@ public abstract class BaseProtocolDecoder extends ExtendedObjectDecoder {
     @Override
     protected Object handleEmptyMessage(Channel channel, SocketAddress remoteAddress, Object msg) {
         DeviceSession deviceSession = getDeviceSession(channel, remoteAddress);
-        if (getConfig().getBoolean("database.saveEmpty", false) && deviceSession != null) {
+        if (getConfig().getBoolean(Keys.DATABASE_SAVE_EMPTY) && deviceSession != null) {
             Position position = new Position(getProtocolName());
             position.setDeviceId(deviceSession.getDeviceId());
             getLastLocation(position, null);
@@ -210,11 +210,5 @@ public abstract class BaseProtocolDecoder extends ExtendedObjectDecoder {
         }
     }
     
-    /**
-     * Método auxiliar para acceder a la configuración.
-     * En este ejemplo, se asume que el CacheManager dispone de la instancia de Config.
-     */
-    protected Config getConfig() {
-        return cacheManager.getConfig();
-    }
+   
 }

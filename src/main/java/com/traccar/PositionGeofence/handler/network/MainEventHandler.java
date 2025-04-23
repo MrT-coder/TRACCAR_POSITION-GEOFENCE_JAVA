@@ -9,13 +9,12 @@ import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.timeout.IdleStateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.traccar.PositionGeofence.BaseProtocolDecoder;
 import com.traccar.PositionGeofence.helper.NetworkUtil;
 import com.traccar.PositionGeofence.protocol.BasePipelineFactory;
-import com.traccar.PositionGeofence.protocol.BaseProtocolDecoder;
 import com.traccar.PositionGeofence.session.ConnectionManager;
 
 import java.util.Arrays;
@@ -52,7 +51,7 @@ public class MainEventHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) {
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         LOGGER.info("[{}] disconnected", NetworkUtil.session(ctx.channel()));
         closeChannel(ctx.channel());
 

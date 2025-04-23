@@ -21,8 +21,7 @@ public class ServerGatewayController {
     @GetMapping
     public ResponseEntity<Server> getServer() {
         try {
-            // Se podría definir un ID fijo (por ejemplo, 1) o implementar otra lógica para seleccionar el servidor global.
-            Server server = serverService.getServerById(1L);
+            Server server = serverService.getServer();
             if (server != null) {
                 return ResponseEntity.ok(server);
             } else {

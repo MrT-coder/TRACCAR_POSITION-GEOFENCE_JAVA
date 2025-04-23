@@ -65,7 +65,7 @@ public final class PositionUtil {
      */
     public static List<Position> getLatestPositions(Storage storage, long userId, DeviceClient deviceClient) throws Exception {
         // Obtener los dispositivos asociados al usuario a través de REST
-        List<Device> devices = deviceClient.getDevicesForUser(userId);
+        List<Device> devices = deviceClient.getDevicesByUser(userId);
         Set<Long> deviceIds = devices.stream().map(BaseModel::getId).collect(Collectors.toSet());
 
         // Consultar todas las posiciones de esos dispositivos

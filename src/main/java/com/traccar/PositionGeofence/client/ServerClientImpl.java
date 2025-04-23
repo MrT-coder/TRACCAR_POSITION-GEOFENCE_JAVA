@@ -14,17 +14,10 @@ public class ServerClientImpl implements ServerClient {
     private final RestTemplate restTemplate;
     private final String serverServiceBaseUrl;
 
+
     public ServerClientImpl(@Value("${gateway.server.baseUrl}") String serverServiceBaseUrl) {
         this.serverServiceBaseUrl = serverServiceBaseUrl;
         this.restTemplate = new RestTemplate();
-    }
-
-    @Override
-    public List<Server> getServersById(Long serverId) throws Exception {
-        // Construimos el endpoint, por ejemplo: http://<baseUrl>/servers/{id}
-        String url = serverServiceBaseUrl + "/server/" + serverId;
-        Server[] servers = restTemplate.getForObject(url, Server[].class);
-        return (servers != null) ? Arrays.asList(servers) : List.of();
     }
 
     @Override

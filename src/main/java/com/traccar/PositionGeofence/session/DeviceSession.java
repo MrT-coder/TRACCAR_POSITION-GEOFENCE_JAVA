@@ -52,13 +52,13 @@ public class DeviceSession {
         return new ConnectionKey(channel, remoteAddress);
     }
 
-    // public boolean supportsLiveCommands() {
-    //     return BasePipelineFactory.getHandler(channel.pipeline(), HttpRequestDecoder.class) == null;
-    // }
+    public boolean supportsLiveCommands() {
+         return BasePipelineFactory.getHandler(channel.pipeline(), HttpRequestDecoder.class) == null;
+    }
 
-    // public void sendCommand(Command command) {
-    //     protocol.sendDataCommand(channel, remoteAddress, command);
-    // }
+    public void sendCommand(Command command) {
+         protocol.sendDataCommand(channel, remoteAddress, command);
+    }
 
     public static final String KEY_TIMEZONE = "timezone";
 
