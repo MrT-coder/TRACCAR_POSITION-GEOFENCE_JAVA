@@ -5,9 +5,12 @@ import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 
 import com.traccar.PositionGeofence.config.Config;
 import com.traccar.PositionGeofence.config.Keys;
@@ -19,11 +22,15 @@ import com.traccar.PositionGeofence.session.ConnectionManager;
 
 import java.nio.charset.StandardCharsets;
 
+@Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class StandardLoggingHandler extends ChannelDuplexHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StandardLoggingHandler.class);
 
     private final String protocol;
+    
+    @Autowired
     private ConnectionManager connectionManager;
     private boolean decodeTextData;
 
@@ -31,12 +38,12 @@ public class StandardLoggingHandler extends ChannelDuplexHandler {
         this.protocol = protocol;
     }
 
-    @Inject
+    @Autowired
     public void setConfig(Config config) {
         decodeTextData = config.getBoolean(Keys.LOGGER_TEXT_PROTOCOL);
     }
 
-    @Inject
+    @Autowired
     public void setConnectionManager(ConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
     }

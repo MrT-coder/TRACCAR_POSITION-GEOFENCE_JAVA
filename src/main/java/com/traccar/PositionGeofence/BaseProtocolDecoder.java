@@ -53,23 +53,11 @@ public abstract class BaseProtocolDecoder extends ExtendedObjectDecoder {
     public void setConnectionManager(ConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
     }
-    // @Autowired
-    // public void setStatisticsManager(StatisticsManager statisticsManager) {
-
-    
-    //     this.statisticsManager = statisticsManager;
-    // }
     @Autowired
     public void setMediaManager(MediaManager mediaManager) {
         this.mediaManager = mediaManager;
     }
-    // @Autowired
-    // public void setCommandsManager(CommandsManager commandsManager) {
-    //     this.commandsManager = commandsManager;
-    // }
-    // public CommandsManager getCommandsManager() {
-    //     return commandsManager;
-    // }
+
     
     // ---- Métodos de utilidad ----
     public String writeMediaFile(String uniqueId, ByteBuf buf, String extension) {
@@ -149,49 +137,7 @@ public abstract class BaseProtocolDecoder extends ExtendedObjectDecoder {
         }
     }
     
-    /**
-     * Método central que se invoca cuando se recibe un mensaje.
-     * – Registra la recepción de mensajes en estadísticas.
-     * – Determina el ID del dispositivo a partir del mensaje decodificado.
-     * – Actualiza el estado del dispositivo y envía comandos pendientes.
-     */
-    // @Override
-    // protected void onMessageEvent(Channel channel, SocketAddress remoteAddress, Object originalMessage, Object decodedMessage) {
-    //     if (statisticsManager != null) {
-    //         statisticsManager.registerMessageReceived();
-    //     }
-    //     Set<Long> deviceIds = new HashSet<>();
-    //     if (decodedMessage != null) {
-    //         if (decodedMessage instanceof Position position) {
-    //             deviceIds.add(position.getDeviceId());
-    //         } else if (decodedMessage instanceof Collection collection) {
-    //             for (Object obj : collection) {
-    //                 if (obj instanceof Position pos) {
-    //                     deviceIds.add(pos.getDeviceId());
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     if (deviceIds.isEmpty()) {
-    //         DeviceSession deviceSession = getDeviceSession(channel, remoteAddress);
-    //         if (deviceSession != null) {
-    //             deviceIds.add(deviceSession.getDeviceId());
-    //         }
-    //     }
-    //     for (long deviceId : deviceIds) {
-    //         connectionManager.updateDevice(deviceId, Device.STATUS_ONLINE, new Date());
-    //         sendQueuedCommands(channel, remoteAddress, deviceId);
-    //     }
-    // }
-    
-    /**
-     * Envía los comandos encolados para un dispositivo.
-     */
-    // protected void sendQueuedCommands(Channel channel, SocketAddress remoteAddress, long deviceId) {
-    //     for (Command command : commandsManager.readQueuedCommands(deviceId)) {
-    //         protocol.sendDataCommand(channel, remoteAddress, command);
-    //     }
-    // }
+
     
     /**
      * Maneja el caso de un mensaje "vacío" (por ejemplo, heartbeat).

@@ -2,17 +2,17 @@ package com.traccar.PositionGeofence.protocol;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOutboundHandler;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.IdleStateHandler;
-import com.google.inject.Injector;
 
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
-import com.traccar.PositionGeofence.BaseProtocolDecoder;
-import com.traccar.PositionGeofence.PositionGeofenceApplication;
 import com.traccar.PositionGeofence.ProcessingHandler;
 import com.traccar.PositionGeofence.TrackerConnector;
 import com.traccar.PositionGeofence.WrapperInboundHandler;
@@ -27,53 +27,54 @@ import com.traccar.PositionGeofence.handler.network.OpenChannelHandler;
 import com.traccar.PositionGeofence.handler.network.RemoteAddressHandler;
 import com.traccar.PositionGeofence.handler.network.StandardLoggingHandler;
 
-import java.util.Map;
-
+/**
+ * Factoria base de pipelines Netty, parametrizada por protocolo y con Spring
+ * DI.
+ */
 @Component
-public abstract class BasePipelineFactory extends ChannelInitializer<Channel> {
+public abstract class BasePipelineFactory extends ChannelInitializer<Channel> implements ApplicationContextAware {
 
-    private final Injector injector;
-    private final TrackerConnector connector;
-    private final Config config;
-    private final String protocol;
-    private final int timeout;
+    protected final TrackerConnector connector;
+    protected final Config config;
+    protected final String protocol;
+    protected final int timeout;
 
-  public BasePipelineFactory(TrackerConnector connector, Config config, String protocol) {
-        this.injector = PositionGeofenceApplication.getInjector();
+    @Autowired
+    private RemoteAddressHandler remoteAddressHandler;
+
+    @Autowired
+    private ProcessingHandler processingHandler;
+
+    @Autowired
+    private MainEventHandler mainEventHandler;
+
+    @Autowired
+    private ApplicationContext ctx;
+
+    public BasePipelineFactory(TrackerConnector connector, Config config, String protocol) {
         this.connector = connector;
         this.config = config;
         this.protocol = protocol;
-        int timeout = config.getInteger(Keys.PROTOCOL_TIMEOUT.withPrefix(protocol));
-        if (timeout == 0) {
+        int t = config.getInteger(Keys.PROTOCOL_TIMEOUT.withPrefix(protocol));
+        if (t == 0) {
             this.timeout = config.getInteger(Keys.SERVER_TIMEOUT);
         } else {
-            this.timeout = timeout;
+            this.timeout = t;
         }
     }
-   
-    /**
-     * Método abstracto para agregar handlers de transporte (por ejemplo, SSL, decodificadores de frames, etc.).
-     */
-    protected abstract void addTransportHandlers(PipelineBuilder pipeline);
 
     /**
-     * Método abstracto para agregar los handlers específicos del protocolo (decoders/encoders).
-     */
-    protected abstract void addProtocolHandlers(PipelineBuilder pipeline);
-
- 
-
-    /**
-     * Método utilitario para obtener un handler específico del pipeline.
+     * Método auxiliar para que otras clases encuentren handlers ya añadidos al
+     * pipeline.
      */
     @SuppressWarnings("unchecked")
     public static <T extends ChannelHandler> T getHandler(ChannelPipeline pipeline, Class<T> clazz) {
-        for (Map.Entry<String, ChannelHandler> entry : pipeline) {
-            ChannelHandler handler = entry.getValue();
-            if (handler instanceof WrapperInboundHandler) {
-                handler = ((WrapperInboundHandler) handler).getWrappedHandler();
-            } else if (handler instanceof WrapperOutboundHandler) {
-                handler = ((WrapperOutboundHandler) handler).getWrappedHandler();
+        for (Map.Entry<String, ChannelHandler> handlerEntry : pipeline) {
+            ChannelHandler handler = handlerEntry.getValue();
+            if (handler instanceof WrapperInboundHandler wrapperHandler) {
+                handler = wrapperHandler.getWrappedHandler();
+            } else if (handler instanceof WrapperOutboundHandler wrapperHandler) {
+                handler = wrapperHandler.getWrappedHandler();
             }
             if (clazz.isAssignableFrom(handler.getClass())) {
                 return (T) handler;
@@ -82,47 +83,46 @@ public abstract class BasePipelineFactory extends ChannelInitializer<Channel> {
         return null;
     }
 
-    private <T> T injectMembers(T object) {
-        injector.injectMembers(object);
-        return object;
-    }
+    protected abstract void addTransportHandlers(PipelineBuilder pipeline);
+
+    protected abstract void addProtocolHandlers(PipelineBuilder pipeline);
 
     @Override
     protected void initChannel(Channel channel) {
         final ChannelPipeline pipeline = channel.pipeline();
 
+        // 1) transporte puro (framing, SSL, etc)
         addTransportHandlers(pipeline::addLast);
 
-        if (timeout > 0 && !connector.isDatagram()) {
+        // 2) idle timeout
+        if (!connector.isDatagram() && timeout > 0) {
             pipeline.addLast(new IdleStateHandler(timeout, 0, 0));
         }
+
+        // 3) canal abierto / forwarder / logging / mensaje bruto
         pipeline.addLast(new OpenChannelHandler(connector));
         if (config.hasKey(Keys.SERVER_FORWARD)) {
             int port = config.getInteger(Keys.PROTOCOL_PORT.withPrefix(protocol));
-            pipeline.addLast(injectMembers(new NetworkForwarderHandler(port)));
+            pipeline.addLast(new NetworkForwarderHandler(port));
         }
         pipeline.addLast(new NetworkMessageHandler());
-        pipeline.addLast(injectMembers(new StandardLoggingHandler(protocol)));
+        StandardLoggingHandler loggingHandler = ctx.getBean(StandardLoggingHandler.class,protocol);
+        pipeline.addLast(loggingHandler);
 
-        if (!connector.isDatagram() && !config.getBoolean(Keys.SERVER_INSTANT_ACKNOWLEDGEMENT)) {
+        // 4) ACK si toca
+        if (!connector.isDatagram()
+                && !config.getBoolean(Keys.SERVER_INSTANT_ACKNOWLEDGEMENT)) {
             pipeline.addLast(new AcknowledgementHandler());
         }
 
-        addProtocolHandlers(handler -> {
-            if (handler instanceof BaseProtocolDecoder || handler instanceof BaseProtocolEncoder) {
-                injectMembers(handler);
-            } else {
-                if (handler instanceof ChannelInboundHandler channelHandler) {
-                    handler = new WrapperInboundHandler(channelHandler);
-                } else if (handler instanceof ChannelOutboundHandler channelHandler) {
-                    handler = new WrapperOutboundHandler(channelHandler);
-                }
-            }
-            pipeline.addLast(handler);
-        });
+        // 5) protocolo concreto (decoder/encoder)
+        addProtocolHandlers(pipeline::addLast);
 
-        pipeline.addLast(injector.getInstance(RemoteAddressHandler.class));
-        pipeline.addLast(injector.getInstance(ProcessingHandler.class));
-        pipeline.addLast(injector.getInstance(MainEventHandler.class));
+        // 6) resto de la cadena de eventos
+        pipeline.addLast(remoteAddressHandler);
+        pipeline.addLast(processingHandler);
+        pipeline.addLast(mainEventHandler);
+
     }
+
 }

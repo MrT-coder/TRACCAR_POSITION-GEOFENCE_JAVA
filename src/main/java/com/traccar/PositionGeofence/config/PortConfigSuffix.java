@@ -63,7 +63,8 @@ public class PortConfigSuffix extends ConfigSuffix<Integer> {
         PORTS.put("gator", 5052);
         PORTS.put("noran", 5053);
         PORTS.put("m2m", 5054);
-        PORTS.put("osmand", 5055);
+        // PORTS.put("osmand", 5055);
+        PORTS.put("osmand", 4999);
         PORTS.put("easytrack", 5056);
         PORTS.put("gpsmarker", 5057);
         PORTS.put("khd", 5058);

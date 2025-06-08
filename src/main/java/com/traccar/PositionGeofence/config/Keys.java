@@ -751,7 +751,7 @@ public final class Keys {
     public static final ConfigKey<Integer> WEB_PORT = new IntegerConfigKey(
             "web.port",
             List.of(KeyType.CONFIG),
-            8082);
+            8080);
 
     /**
      * Maximum API requests per second. Above this limit requests and delayed and throttled.

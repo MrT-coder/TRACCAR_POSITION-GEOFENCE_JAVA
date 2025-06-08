@@ -13,6 +13,7 @@ import io.netty.util.concurrent.GlobalEventExecutor;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import com.traccar.PositionGeofence.config.Config;
@@ -68,6 +69,12 @@ public abstract class TrackerServer implements TrackerConnector {
             @Override
             protected void addProtocolHandlers(PipelineBuilder pipeline) {
                 TrackerServer.this.addProtocolHandlers(pipeline, config);
+            }
+
+            
+            @Override
+            public void setApplicationContext(ApplicationContext applicationContext) {
+                // Implementation for setting the application context
             }
         };
 

@@ -11,6 +11,8 @@ import io.netty.util.concurrent.GlobalEventExecutor;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
+import org.springframework.context.ApplicationContext;
+
 import com.traccar.PositionGeofence.config.Config;
 import com.traccar.PositionGeofence.config.Keys;
 import com.traccar.PositionGeofence.protocol.BasePipelineFactory;
@@ -70,6 +72,11 @@ public abstract class TrackerClient implements TrackerConnector {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
+            }
+
+            @Override
+            public void setApplicationContext(ApplicationContext applicationContext) {
+                // Implementation for setting the application context
             }
         };
 

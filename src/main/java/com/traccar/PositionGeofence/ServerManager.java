@@ -44,6 +44,7 @@ public class ServerManager implements LifecycleObject {
                 if (port > 0) {
                     connectorList.addAll(protocol.getConnectorList());
                     protocolList.put(protocolName, protocol);
+                    LOGGER.debug("Configurar protocolo {} en puerto {}", protocolName, port);
                 }
             }
         }
@@ -59,9 +60,9 @@ public class ServerManager implements LifecycleObject {
             try {
                 connector.start();
             } catch (BindException e) {
-                LOGGER.warn("Port disabled due to conflict", e);
+                LOGGER.warn("Error en el puerto", e);
             } catch (ConnectException e) {
-                LOGGER.warn("Connection failed", e);
+                LOGGER.warn("No pudo arrancar conector", e);
             }
         }
     }
@@ -69,7 +70,11 @@ public class ServerManager implements LifecycleObject {
     @Override
     public void stop() throws Exception {
         for (TrackerConnector connector : connectorList) {
-            connector.stop();
+            try {
+                connector.stop();
+            } catch (Exception e) {
+                LOGGER.warn("No pudo parar conector", e);
+            }
         }
     }
 

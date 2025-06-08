@@ -25,7 +25,6 @@ logging:
 # Resto tu configuración…  
 traccar:
   use-environment-variables: false
-  protocols: gps103,tk103,osmand
   gps103:
     port: 5001
   tk103:
@@ -77,6 +76,7 @@ spring:
   config:
     activate:
       on-profile: debug
+
 
 logging:
   level:
